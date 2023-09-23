@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSP Editor</title>
+    <style>
+        /* CSS stilleri burada */
+        /* Genel stiller */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2e2e2e;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: row;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 300px;
+            background-color: #343434;
+            color: #fff;
+            padding: 20px;
+            transition: transform 0.3s ease;
+            transform: translateX(-100%);
+            z-index: 2;
+            position: fixed;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .sidebar.active {
+            transform: translateX(0);
+        }
+
+        .container {
+            background-color: #2e2e2e;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: #343434;
+            color: #fff;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin: 0;
+        }
+
+        .image-container {
+            text-align: center;
+            padding: 20px;
+            background-color: #272727;
+            position: relative;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            clip-path: inset(0% 0% 0% 0%);
+        }
+
+        .image-container img {
+            max-width: 100%;
+            border-radius: 8px;
+            transition: filter 0.3s ease;
+            transform: rotate(0deg);
+            cursor: grab;
+        }
+
+
+        /* Katmanlar */
+        .image-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* Filtreler ve düzenleme seçenekleri */
+        .filters {
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .filter {
+            flex: 1;
+            max-width: calc(33.33% - 10px);
+        }
+
+        .filter label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        .filter input[type="range"] {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        /* İndirme düğmesi */
+        .download-button {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .download-button a {
+            background-color: #0e8adc;
+            color: #fff;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .download-button a:hover {
+            background-color: #d9ff00;
+        }
+
+        /* Özel çubuk ayarlama stilleri */
+        .range-container {
+            position: relative;
+            width: 100%;
+            padding: 10px;
+            background-color: #2e2e2e;
+        }
+
+        .range-label {
+            color: #fff;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .range-slider {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 10px;
+            background-color: #ddd;
+            border-radius: 5px;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .range-slider:hover {
+            opacity: 1;
+        }
+        .preview-container {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: none; /* Başlangıçta görünmez yapın */
+}
+
+.preview-container img {
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+    margin: 0 auto;
+}
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background-color: #fd0000;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .range-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background-color: #f90000;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .image-container {
+            text-align: center;
+            padding: 20px;
+            background-color: #272727; /* Arka plan rengini siyah yapmak için #000 (siyah) kullanın */
+            position: relative;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+
+        .rotate-handle {
+            width: 30px;
+            height: 30px;
+            background-color: #f3ff05;
+            border-radius: 50%;
+            cursor: pointer;
+            pointer-events: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            bottom: 20px;
+        }
+
+        /* Sürükle-bırak stil */
+        .drag-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* Hamburger menü animasyonları */
+        .hamburger-menu {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 3;
+            cursor: pointer;
+        }
+
+        .bar {
+            width: 30px;
+            height: 3px;
+            background-color: #ffffff;
+            margin: 6px 0;
+            transition: 0.4s;
+        }
+
+        .bar1.change {
+            transform: rotate(-45deg) translate(-5px, 6px);
+        }
+
+        .bar2.change {
+            opacity: 0;
+        }
+
+        .bar3.change {
+            transform: rotate(45deg) translate(-5px, -6px);
+        }
+
+        /* Dosya yükleme etiketi stilleri */
+        .upload-label {
+            background-color: #f70b0b;
+            color: #fff;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin: 20px;
+            display: inline-block;
+        }
+
+        .upload-label:hover {
+            background-color: #075cf9;
+        }
+
+        #imageInput {
+            display: none;
+        }
+/* Logo stilleri */
+.logo-container {
+    position: fixed;
+    right: 6cm; /* Sabit sağ konum */
+    top: 0.7cm; /* Sabit üst konum */
+    z-index: 3; /* Diğer içeriklerin üstünde görüntülenmesini sağlar */
+}
+
+.logoxx {
+    width: 1.4cm; /* Sabit genişlik */
+    height: auto; /* Otomatik yükseklik (orijinal boyutunu korur) */
+}
+/* Kırpmayı etkinleştirmek için CSS */
+.image-container {
+    text-align: center;
+    padding: 20px;
+    background-color: #272727; /* Arka plan rengini siyah yapmak için #000 (siyah) kullanın */
+    position: relative;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    clip-path: inset(0% 0% 0% 0%); /* Başlangıçta kırpmayı devre dışı bırakır */
+}
+
+
+ 
+    </style>
+</head>
+<body>
+    
+    <!-- Hamburger menü -->
+    <div class="hamburger-menu" onclick="toggleSidebar()">
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <!-- Filtre seçenekleri buraya gelebilir -->
+        <div class="range-container">
+            <p class="range-label">Bulanıklık</p>
+            <input type="range" id="blur" min="0" max="10" value="0" class="range-slider" oninput="applyFilters()">
+        </div>
+        <div class="range-container">
+            <p class="range-label">Parlaklık</p>
+            <input type="range" id="brightness" min="0" max="200" value="100" class="range-slider" oninput="applyFilters()">
+        </div>
+        <div class="range-container">
+            <p class="range-label">Kontras</p>
+            <input type="range" id="contrast" min="0" max="200" value="100" class="range-slider" oninput="applyFilters()">
+        </div>
+        <div class="range-container">
+            <p class="range-label">Gri Tonlama</p>
+            <input type="range" id="grayscale" min="0" max="100" value="0" class="range-slider" oninput="applyFilters()">
+        </div>
+        <div class="range-container">
+            <p class="range-label">Renk Tonu</p>
+            <input type="range" id="hue" min="0" max="360" value="0" class="range-slider" oninput="applyFilters()">
+        </div>
+        <div class="range-container">
+            <p class="range-label">Rengi Ters Çevir</p>
+            <input type="range" id="invert" min="0" max="100" value="0" class="range-slider" oninput="applyFilters()">
+        </div>
+        <div class="range-container">
+            <p class="range-label">Opaklık</p>
+            <input type="range" id="opacity" min="0" max="100" value="100" class="range-slider" oninput="applyFilters()">
+        </div>
+        <div class="range-container">
+            <p class="range-label">Doygunluk</p>
+            <input type="range" id="saturate" min="0" max="500" value="100" class="range-slider" oninput="applyFilters()">
+        </div>
+        <div class="range-container">
+            <p class="range-label">Sepya</p>
+            <input type="range" id="sepia" min="0" max="100" value="0" class="range-slider" oninput="applyFilters()">
+        </div>
+<!-- Sağ Kenarı Ayarla -->
+<div class="range-container">
+    <p class="range-label">Sağ Kenarı Ayarla</p>
+    <input type="range" id="rightCropSlider" min="0" max="100" value="0" class="range-slider" oninput="cropImage()">
+</div>
+
+<!-- Sol Kenarı Ayarla -->
+<div class="range-container">
+    <p class="range-label">Sol Kenarı Ayarla</p>
+    <input type="range" id="leftCropSlider" min="0" max="100" value="0" class="range-slider" oninput="cropImage()">
+</div>
+
+<!-- Üst Kenarı Ayarla -->
+<div class="range-container">
+    <p class="range-label">Üst Kenarı Ayarla</p>
+    <input type="range" id="topCropSlider" min="0" max="100" value="0" class="range-slider" oninput="cropImage()">
+</div>
+
+<!-- Alt Kenarı Ayarla -->
+<div class="range-container">
+    <p class="range-label">Alt Kenarı Ayarla</p>
+    <input type="range" id="bottomCropSlider" min="0" max="100" value="0" class="range-slider" oninput="cropImage()">
+</div>
+
+
+       
+    </div>
+    <div class="header">
+        <div class="logo-container">
+            <img class="logoxx" src="img/Logo.png" alt="">
+        </div>
+       
+    </div>
+    
+<!-- Önizleme alanı -->
+<div class="preview-container">
+    <img id="preview-image" src="" alt="">
+</div>
+        <!-- İmaj görüntüleme bölgesi -->
+        <div class="image-container" onmouseenter="enableDragging()" onmouseleave="disableDragging()">
+            <input type="file" id="imageInput" style="display: none;" accept="image/*" onchange="loadImage(event)">
+            <label for="imageInput" class="upload-label">Görsel Yükle</label>
+            <img src="" id="image" download>
+            <div class="rotate-container">
+                <div class="rotate-handle" onclick="rotateImage(-15)">↻</div>
+            </div>
+        </div>
+
+        <!-- Katmanlar -->
+        <div class="image-layer"></div>
+
+        <!-- Filtreler ve düzenleme seçenekleri -->
+        <div class="filters">
+            <!-- Filtre seçenekleri buraya gelebilir -->
+        </div>
+
+        <!-- İndirme düğmesi -->
+        <div class="download-button">
+            <a id="btnDownload" onclick="saveImage()" download="edited_image.png">Download</a>
+        </div>
+    </div>
+
+    <script>
+// Sidebar'ı açma/kapatma işlevi
+function toggleSidebar() {
+    const sidebar = document.querySelector(".sidebar");
+    sidebar.classList.toggle("active");
+}
+
+// Filtreleri ve kırpmayı önizleme resmi üzerine uygula
+function applyFilters() {
+    const image = document.getElementById("image");
+    const blur = document.getElementById("blur").value;
+    const brightness = document.getElementById("brightness").value;
+    const contrast = document.getElementById("contrast").value;
+    const grayscale = document.getElementById("grayscale").value;
+    const hue = document.getElementById("hue").value;
+    const invert = document.getElementById("invert").value;
+    const opacity = document.getElementById("opacity").value;
+    const saturate = document.getElementById("saturate").value;
+    const sepia = document.getElementById("sepia").value;
+
+    image.style.filter = `blur(${blur}px) brightness(${brightness}%) contrast(${contrast}%) grayscale(${grayscale}%) hue-rotate(${hue}deg) invert(${invert}%) opacity(${opacity}%) saturate(${saturate}%) sepia(${sepia}%)`;
+
+    cropImage(); // Kırpmayı da uygula
+}
+
+// Resmi kaydetme işlevi
+function saveImage() {
+    const image = document.getElementById("image");
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const previewImage = document.getElementById("preview-image");
+
+    canvas.width = image.width;
+    canvas.height = image.height;
+
+    cropImage(); // Kırpmayı uygula
+
+    ctx.filter = image.style.filter; // Filtreleri uygula
+    ctx.drawImage(image, 0, 0);
+
+    const downloadLink = document.createElement('a');
+    downloadLink.href = canvas.toDataURL("image/png");
+    downloadLink.download = "edited_image.png";
+    downloadLink.click();
+}
+
+// Kırpmayı uygula
+function cropImage() {
+    const image = document.getElementById("image");
+    const rightCropSlider = document.getElementById("rightCropSlider").value;
+    const leftCropSlider = document.getElementById("leftCropSlider").value;
+    const topCropSlider = document.getElementById("topCropSlider").value;
+    const bottomCropSlider = document.getElementById("bottomCropSlider").value;
+
+    const originalWidth = image.naturalWidth;
+    const originalHeight = image.naturalHeight;
+    const cropLeft = (leftCropSlider / 100) * originalWidth;
+    const cropTop = (topCropSlider / 100) * originalHeight;
+    const cropWidth = originalWidth - ((rightCropSlider / 100) * originalWidth) - cropLeft;
+    const cropHeight = originalHeight - ((bottomCropSlider / 100) * originalHeight) - cropTop;
+
+    image.style.clipPath = `inset(${topCropSlider}% ${rightCropSlider}% ${bottomCropSlider}% ${leftCropSlider}%)`;
+    image.style.objectFit = 'none'; // Resmin boyutunu kırpmaya göre ayarla
+    image.style.width = cropWidth + "px";
+    image.style.height = cropHeight + "px";
+    image.style.left = -cropLeft + "px";
+    image.style.top = -cropTop + "px";
+}
+
+// Resmi döndürme işlevi
+function rotateImage(degrees) {
+    const image = document.getElementById("image");
+    const currentRotation = parseInt(image.style.transform.replace("rotate(", "").replace("deg)", ""));
+    const newRotation = currentRotation + degrees;
+    image.style.transform = `rotate(${newRotation}deg)`;
+}
+
+// Sürükle-bırak işlevlerini etkinleştirme
+function enableDragging() {
+    const image = document.getElementById("image");
+    image.style.cursor = "grab";
+    image.addEventListener("mousedown", startDragging);
+    image.addEventListener("mouseup", stopDragging);
+    document.addEventListener("mousemove", dragImage);
+}
+
+// Sürükle-bırak işlevlerini devre dışı bırakma
+function disableDragging() {
+    const image = document.getElementById("image");
+    image.style.cursor = "auto";
+    image.removeEventListener("mousedown", startDragging);
+    image.removeEventListener("mouseup", stopDragging);
+    document.removeEventListener("mousemove", dragImage);
+}
+
+let isDragging = false;
+let dragStartX, dragStartY;
+
+// Sürükle-bırak işlevleri
+function startDragging(event) {
+    isDragging = true;
+    dragStartX = event.clientX;
+    dragStartY = event.clientY;
+}
+
+function stopDragging() {
+    isDragging = false;
+}
+
+function dragImage(event) {
+    if (isDragging) {
+        const image = document.getElementById("image");
+        const offsetX = event.clientX - dragStartX;
+        const offsetY = event.clientY - dragStartY;
+        const currentX = parseInt(image.style.left || 0);
+        const currentY = parseInt(image.style.top || 0);
+        image.style.left = currentX + offsetX + "px";
+        image.style.top = currentY + offsetY + "px";
+        dragStartX = event.clientX;
+        dragStartY = event.clientY;
+    }
+}
+
+// Resmi yükleme işlevi
+function loadImage(event) {
+    const image = document.getElementById("image");
+    const previewImage = document.getElementById("preview-image");
+    const fileInput = event.target;
+    const reader = new FileReader();
+
+    reader.onload = function () {
+        image.src = reader.result;
+        previewImage.src = reader.result;
+        resetImage(); // Yeni resim yüklendiğinde kırpmayı sıfırla
+    };
+
+    if (fileInput.files.length > 0) {
+        reader.readAsDataURL(fileInput.files[0]);
+    }
+}
+
+// Resim boyutunu ve konumunu sıfırlama
+function resetImage() {
+    const image = document.getElementById("image");
+    image.style.clipPath = "none";
+    image.style.objectFit = "cover";
+    image.style.width = "100%";
+    image.style.height = "100%";
+    image.style.left = "0";
+    image.style.top = "0";
+    document.getElementById("rightCropSlider").value = 0;
+    document.getElementById("leftCropSlider").value = 0;
+    document.getElementById("topCropSlider").value = 0;
+    document.getElementById("bottomCropSlider").value = 0;
+}
+
+
+
+    </script>
+</body>
+</html>
