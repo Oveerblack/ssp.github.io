@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SSP Editor</title>
+    
     <style>
-        /* CSS stilleri burada */
         /* Genel stiller */
         body {
             font-family: Arial, sans-serif;
@@ -16,7 +16,66 @@
             flex-direction: row;
             min-height: 100vh;
         }
+    /* Kalite seçeneği ve kaydetme düğmesi stilini güncelle */
+    .file-options {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+    }
 
+    #fileType,
+    #imageQuality {
+        padding: 10px;
+        border: none;
+        background-color: #2e2e2e;
+        color: #fff;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        font-size: 16px;
+        font-weight: bold;
+        outline: none;
+    }
+
+    #fileType:hover,
+    #imageQuality:hover {
+        background-color: #343434;
+    }
+
+    #btnDownload {
+        background-color: #007bff;
+        color: #fff;
+        padding: 12px 24px;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+        cursor: pointer;
+        font-size: 18px;
+        border: none;
+        outline: none;
+    }
+
+    #btnDownload:hover {
+        background-color: #0056b3;
+    }
+
+    /* Animasyonlar */
+    .file-options {
+        animation: fadeIn 1s ease;
+    }
+
+    @keyframes fadeIn {
+        0% {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
         .sidebar {
             width: 300px;
             background-color: #343434;
@@ -74,8 +133,7 @@
         .image-container img {
             max-width: 100%;
             border-radius: 8px;
-            transition: filter 0.3s ease;
-            transform: rotate(0deg);
+            transition: filter 0.3s ease, transform 0.3s ease;
             cursor: grab;
         }
 
@@ -123,18 +181,19 @@
         }
 
         .download-button a {
-            background-color: #0e8adc;
+            background-color: #007bff; /* Mavi renkli bir düğme */
             color: #fff;
-            padding: 10px 20px;
+            padding: 12px 24px;
             text-decoration: none;
-            border-radius: 4px;
+            border-radius: 6px;
             font-weight: bold;
             transition: background-color 0.3s ease;
         }
 
         .download-button a:hover {
-            background-color: #d9ff00;
+            background-color: #0056b3; /* Hover durumunda daha koyu bir mavi */
         }
+
 
         /* Özel çubuk ayarlama stilleri */
         .range-container {
@@ -315,18 +374,16 @@
     clip-path: inset(0% 0% 0% 0%); /* Başlangıçta kırpmayı devre dışı bırakır */
 }
 
-
- 
     </style>
 </head>
 <body>
-    
-    <!-- Hamburger menü -->
+   
     <div class="hamburger-menu" onclick="toggleSidebar()">
         <div class="bar"></div>
         <div class="bar"></div>
         <div class="bar"></div>
     </div>
+
 
     <!-- Sidebar -->
     <div class="sidebar">
@@ -367,6 +424,7 @@
             <p class="range-label">Sepya</p>
             <input type="range" id="sepia" min="0" max="100" value="0" class="range-slider" oninput="applyFilters()">
         </div>
+        
 <!-- Sağ Kenarı Ayarla -->
 <div class="range-container">
     <p class="range-label">Sağ Kenarı Ayarla</p>
@@ -390,30 +448,28 @@
     <p class="range-label">Alt Kenarı Ayarla</p>
     <input type="range" id="bottomCropSlider" min="0" max="100" value="0" class="range-slider" oninput="cropImage()">
 </div>
-
-
-       
     </div>
-    <div class="header">
-        <div class="logo-container">
-            <img class="logoxx" src="img/Logo.png" alt="">
+    <div class="container">
+        <div class="header">
+            <div class="logo-container">
+                <img class="logoxx" src="img/Logo.png" alt="">
+            </div>
         </div>
-       
-    </div>
-    
-<!-- Önizleme alanı -->
-<div class="preview-container">
-    <img id="preview-image" src="" alt="">
-</div>
-        <!-- İmaj görüntüleme bölgesi -->
+
         <div class="image-container" onmouseenter="enableDragging()" onmouseleave="disableDragging()">
             <input type="file" id="imageInput" style="display: none;" accept="image/*" onchange="loadImage(event)">
-            <label for="imageInput" class="upload-label">Görsel Yükle</label>
+            <label for="imageInput" class="upload-label">Resim Yükle</label>
             <img src="" id="image" download>
             <div class="rotate-container">
                 <div class="rotate-handle" onclick="rotateImage(-15)">↻</div>
             </div>
         </div>
+    
+<!-- Önizleme alanı -->
+<div class="preview-container">
+    <img id="preview-image" src="" alt="">
+</div>
+   
 
         <!-- Katmanlar -->
         <div class="image-layer"></div>
@@ -423,10 +479,25 @@
             <!-- Filtre seçenekleri buraya gelebilir -->
         </div>
 
-        <!-- İndirme düğmesi -->
-        <div class="download-button">
-            <a id="btnDownload" onclick="saveImage()" download="edited_image.png">Download</a>
-        </div>
+    <!-- Dosya türü seçeneği ekle -->
+<select id="fileType">
+    <option value="png">PNG</option>
+    <option value="jpg">JPG</option>
+    <option value="jpeg">JPEG</option>
+    <option value="svg">SVG</option>
+</select>
+
+<!-- Kaydetme kalite seçeneği ekle -->
+<select id="imageQuality">
+    <option value="0.1">10%</option>
+    <option value="0.4">40%</option>
+    <option value="0.5">50%</option>
+    <option value="1">100%</option>
+</select>
+
+<div class="download-button">
+    <a id="btnDownload" onclick="saveImage()">Download</a>
+</div>
     </div>
 
     <script>
@@ -454,6 +525,16 @@ function applyFilters() {
     cropImage(); // Kırpmayı da uygula
 }
 
+// Yükleme ekranını göster
+const loadingScreen = document.querySelector(".loading-screen");
+const editor = document.querySelector(".photo-editor");
+
+// 3 saniye bekle ve ardından photo editor'ı göster
+setTimeout(function () {
+    loadingScreen.style.display = "none";
+    editor.style.display = "block";
+}, 3000); // 3000 milisaniye (3 saniye) beklet
+
 // Resmi kaydetme işlevi
 function saveImage() {
     const image = document.getElementById("image");
@@ -472,6 +553,41 @@ function saveImage() {
     const downloadLink = document.createElement('a');
     downloadLink.href = canvas.toDataURL("image/png");
     downloadLink.download = "edited_image.png";
+    downloadLink.click();
+}
+// Resmi kaydetme işlevi
+function saveImage() {
+    const image = document.getElementById("image");
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const previewImage = document.getElementById("preview-image");
+    const fileType = document.getElementById("fileType").value; // Seçilen dosya türünü al
+    const quality = parseFloat(document.getElementById("imageQuality").value); // Seçilen kaliteyi al
+
+    canvas.width = image.width;
+    canvas.height = image.height;
+
+    cropImage(); // Kırpmayı uygula
+
+    ctx.filter = image.style.filter; // Filtreleri uygula
+    ctx.drawImage(image, 0, 0);
+
+    const downloadLink = document.createElement('a');
+
+    // Dosya adını ve uzantısını belirle
+    const fileName = "edited_image." + fileType;
+
+    // Dosya türüne ve kaliteye göre kaydet
+    if (fileType === "svg") {
+        // SVG dosyasını direkt olarak indir
+        const svgBlob = new Blob([new XMLSerializer().serializeToString(image)], { type: 'image/svg+xml' });
+        downloadLink.href = URL.createObjectURL(svgBlob);
+    } else if (fileType === "jpg" || fileType === "jpeg" || fileType === "png") {
+        // JPG, JPEG veya PNG olarak kaydet
+        downloadLink.href = canvas.toDataURL("image/" + fileType, quality);
+    }
+
+    downloadLink.download = fileName;
     downloadLink.click();
 }
 
@@ -584,8 +700,6 @@ function resetImage() {
     document.getElementById("topCropSlider").value = 0;
     document.getElementById("bottomCropSlider").value = 0;
 }
-
-
 
     </script>
 </body>
