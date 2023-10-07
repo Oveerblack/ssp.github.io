@@ -373,6 +373,51 @@
     position: relative;
     clip-path: inset(0% 0% 0% 0%); /* Başlangıçta kırpmayı devre dışı bırakır */
 }
+/* Telefonlar için stil */
+@media only screen and (max-width: 768px) {
+    /* Genel stiller */
+    body {
+        font-size: 16px;
+        background-color: #333;
+    }
+
+    /* Header stilleri */
+    .header {
+        padding: 10px;
+    }
+
+    .header h1 {
+        font-size: 1.5rem;
+    }
+
+    /* Resim konteyneri */
+    .image-container {
+        padding: 10px;
+    }
+
+    /* Yükleme etiketi stilleri */
+    .upload-label {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+
+    /* Sidebar stilleri */
+    .sidebar {
+        width: 200px;
+    }
+
+    .range-container {
+        padding: 8px;
+    }
+
+    /* İndirme düğmesi */
+    .download-button a {
+        padding: 10px 20px;
+        font-size: 16px;
+    }
+    
+    /* Diğer özelleştirmeler buraya eklenebilir */
+}
 
     </style>
 </head>
@@ -424,7 +469,7 @@
             <p class="range-label">Sepya</p>
             <input type="range" id="sepia" min="0" max="100" value="0" class="range-slider" oninput="applyFilters()">
         </div>
-        
+
 <!-- Sağ Kenarı Ayarla -->
 <div class="range-container">
     <p class="range-label">Sağ Kenarı Ayarla</p>
@@ -448,6 +493,9 @@
     <p class="range-label">Alt Kenarı Ayarla</p>
     <input type="range" id="bottomCropSlider" min="0" max="100" value="0" class="range-slider" oninput="cropImage()">
 </div>
+
+</div>
+
     </div>
     <div class="container">
         <div class="header">
@@ -524,6 +572,14 @@ function applyFilters() {
 
     cropImage(); // Kırpmayı da uygula
 }
+// Görseli kaydırma çubuğu ile döndürme işlevi
+function rotateImageWithSlider() {
+    const image = document.getElementById("image");
+    const rotateSlider = document.getElementById("rotateSlider").value;
+
+    // Görseli döndürme işlemi
+    image.style.transform = `rotate(${rotateSlider}deg)`;
+}
 
 // Yükleme ekranını göster
 const loadingScreen = document.querySelector(".loading-screen");
@@ -541,20 +597,41 @@ function saveImage() {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const previewImage = document.getElementById("preview-image");
+    const fileType = document.getElementById("fileType").value;
+    const quality = parseFloat(document.getElementById("imageQuality").value);
+    const rotateSlider = document.getElementById("rotateSlider").value;
 
     canvas.width = image.width;
     canvas.height = image.height;
 
-    cropImage(); // Kırpmayı uygula
+    // Kanvası döndür
+    canvas.style.transform = `rotate(${rotateSlider}deg)`;
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
 
-    ctx.filter = image.style.filter; // Filtreleri uygula
+    ctx.filter = image.style.filter;
+
     ctx.drawImage(image, 0, 0);
 
+    // Döndürülmüş görselin bir kopyasını oluşturun
+    const rotatedImage = new Image();
+    rotatedImage.src = canvas.toDataURL("image/" + fileType, quality);
+
     const downloadLink = document.createElement('a');
-    downloadLink.href = canvas.toDataURL("image/png");
-    downloadLink.download = "edited_image.png";
+    const fileName = "edited_image." + fileType;
+
+    if (fileType === "svg") {
+        const svgBlob = new Blob([new XMLSerializer().serializeToString(image)], { type: 'image/svg+xml' });
+        downloadLink.href = URL.createObjectURL(svgBlob);
+    } else if (fileType === "jpg" || fileType === "jpeg" || fileType === "png") {
+        downloadLink.href = rotatedImage.src;
+    }
+
+    downloadLink.download = fileName;
     downloadLink.click();
 }
+
+
 // Resmi kaydetme işlevi
 function saveImage() {
     const image = document.getElementById("image");
